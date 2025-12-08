@@ -40,7 +40,7 @@ export default function QuizzesDao(db) {
     // Recalculate points from questions if questions are updated
     if (quizUpdates.questions) {
       const totalPoints = quizUpdates.questions.reduce(
-        (sum: number, q: any) => sum + (q.points || 0),
+        (sum, q) => sum + (q.points || 0),
         0
       );
       quizUpdates.points = totalPoints;
