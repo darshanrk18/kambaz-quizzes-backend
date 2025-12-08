@@ -35,10 +35,11 @@ export default function QuizzesDao(db) {
 
   async function addQuestion(quizId, question) {
     const questionWithId = { ...question, _id: uuidv4() };
-    return model.updateOne(
+    const result = await model.updateOne(
       { _id: quizId },
       { $push: { questions: questionWithId } }
     );
+    return result;
   }
 
   async function updateQuestion(quizId, questionId, questionUpdates) {
