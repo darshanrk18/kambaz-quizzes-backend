@@ -94,7 +94,7 @@ export default function QuizRoutes(app, db) {
       const updatedQuiz = await dao.findQuizById(quizId);
       // Recalculate total points
       const totalPoints = updatedQuiz.questions.reduce(
-        (sum: number, q: any) => sum + (q.points || 0),
+        (sum, q) => sum + (q.points || 0),
         0
       );
       await dao.updateQuiz(quizId, { points: totalPoints });
@@ -114,7 +114,7 @@ export default function QuizRoutes(app, db) {
       const updatedQuiz = await dao.findQuizById(quizId);
       // Recalculate total points
       const totalPoints = updatedQuiz.questions.reduce(
-        (sum: number, q: any) => sum + (q.points || 0),
+        (sum, q) => sum + (q.points || 0),
         0
       );
       await dao.updateQuiz(quizId, { points: totalPoints });
@@ -136,7 +136,7 @@ export default function QuizRoutes(app, db) {
       const updatedQuiz = await dao.findQuizById(quizId);
       // Recalculate total points
       const totalPoints = updatedQuiz.questions.reduce(
-        (sum: number, q: any) => sum + (q.points || 0),
+        (sum, q) => sum + (q.points || 0),
         0
       );
       await dao.updateQuiz(quizId, { points: totalPoints });
