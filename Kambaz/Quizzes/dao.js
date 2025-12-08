@@ -11,17 +11,40 @@ export default function QuizzesDao(db) {
   }
 
   async function createQuiz(courseId, quiz) {
+    // Calculate points from questions if not provided
+    const points = quiz.points || 0;
     const newQuiz = {
       ...quiz,
       _id: uuidv4(),
       course: courseId,
       published: false,
       questions: [],
+      quizType: quiz.quizType || "Graded Quiz",
+      assignmentGroup: quiz.assignmentGroup || "Quizzes",
+      shuffleAnswers: quiz.shuffleAnswers !== false,
+      timeLimit: quiz.timeLimit !== false,
+      timeLimitMinutes: quiz.timeLimitMinutes || 20,
+      multipleAttempts: quiz.multipleAttempts || false,
+      attemptsAllowed: quiz.attemptsAllowed || 1,
+      showCorrectAnswers: quiz.showCorrectAnswers || "Never",
+      accessCode: quiz.accessCode || "",
+      oneQuestionAtATime: quiz.oneQuestionAtATime !== false,
+      webcamRequired: quiz.webcamRequired || false,
+      lockQuestionsAfterAnswering: quiz.lockQuestionsAfterAnswering || false,
+      points,
     };
     return model.create(newQuiz);
   }
 
   async function updateQuiz(quizId, quizUpdates) {
+    // Recalculate points from questions if questions are updated
+    if (quizUpdates.questions) {
+      const totalPoints = quizUpdates.questions.reduce(
+        (sum: number, q: any) => sum + (q.points || 0),
+        0
+      );
+      quizUpdates.points = totalPoints;
+    }
     return model.updateOne({ _id: quizId }, { $set: quizUpdates });
   }
 

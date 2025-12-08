@@ -92,7 +92,14 @@ export default function QuizRoutes(app, db) {
       const question = req.body;
       await dao.addQuestion(quizId, question);
       const updatedQuiz = await dao.findQuizById(quizId);
-      res.json(updatedQuiz);
+      // Recalculate total points
+      const totalPoints = updatedQuiz.questions.reduce(
+        (sum: number, q: any) => sum + (q.points || 0),
+        0
+      );
+      await dao.updateQuiz(quizId, { points: totalPoints });
+      const finalQuiz = await dao.findQuizById(quizId);
+      res.json(finalQuiz);
     } catch (error) {
       console.error("Error adding question:", error);
       res.status(500).json({ message: "Server error adding question", error: error.message });
@@ -105,7 +112,14 @@ export default function QuizRoutes(app, db) {
       const questionUpdates = req.body;
       await dao.updateQuestion(quizId, questionId, questionUpdates);
       const updatedQuiz = await dao.findQuizById(quizId);
-      res.json(updatedQuiz);
+      // Recalculate total points
+      const totalPoints = updatedQuiz.questions.reduce(
+        (sum: number, q: any) => sum + (q.points || 0),
+        0
+      );
+      await dao.updateQuiz(quizId, { points: totalPoints });
+      const finalQuiz = await dao.findQuizById(quizId);
+      res.json(finalQuiz);
     } catch (error) {
       console.error("Error updating question:", error);
       res.status(500).json({ message: "Server error updating question", error: error.message });
@@ -120,7 +134,14 @@ export default function QuizRoutes(app, db) {
         return res.status(404).json({ message: "Quiz not found" });
       }
       const updatedQuiz = await dao.findQuizById(quizId);
-      res.json(updatedQuiz);
+      // Recalculate total points
+      const totalPoints = updatedQuiz.questions.reduce(
+        (sum: number, q: any) => sum + (q.points || 0),
+        0
+      );
+      await dao.updateQuiz(quizId, { points: totalPoints });
+      const finalQuiz = await dao.findQuizById(quizId);
+      res.json(finalQuiz);
     } catch (error) {
       console.error("Error deleting question:", error);
       res.status(500).json({ message: "Server error deleting question", error: error.message });

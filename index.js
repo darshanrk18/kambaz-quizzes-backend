@@ -10,6 +10,7 @@ import Database from "./Kambaz/Database/index.js";
 import EnrollmentRoutes from "./Kambaz/Enrollments/routes.js";
 import AssignmentRoutes from "./Kambaz/Assignments/routes.js";
 import QuizRoutes from "./Kambaz/Quizzes/routes.js";
+import QuizAttemptsRoutes from "./Kambaz/QuizAttempts/routes.js";
 import Lab5 from "./Lab5/index.js";
 import Hello from "./Hello.js";
 
@@ -93,6 +94,7 @@ ModuleRoutes(app, Database);
 EnrollmentRoutes(app, Database);
 AssignmentRoutes(app, Database);
 QuizRoutes(app, Database);
+QuizAttemptsRoutes(app, Database);
 
 app.listen(process.env.PORT || 4000, () => {
   console.log("Server running on port 4000");
