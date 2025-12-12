@@ -1,7 +1,6 @@
 import "dotenv/config";
 import express from "express";
 import session from "express-session";
-import MongoStore from "connect-mongo";
 import cors from "cors";
 import mongoose from "mongoose";
 import UserRoutes from "./Kambaz/Users/routes.js";
@@ -14,21 +13,6 @@ import QuizRoutes from "./Kambaz/Quizzes/routes.js";
 import QuizAttemptsRoutes from "./Kambaz/QuizAttempts/routes.js";
 import Lab5 from "./Lab5/index.js";
 import Hello from "./Hello.js";
-
-// Environment variables check
-console.log("=== ENVIRONMENT VARIABLES ===");
-console.log("SERVER_ENV:", process.env.SERVER_ENV);
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("CLIENT_URL:", process.env.CLIENT_URL);
-console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
-const isProduction =
-  process.env.NODE_ENV === "production" ||
-  process.env.SERVER_ENV === "production";
-console.log("Is Production:", isProduction);
-console.log(
-  "Database:",
-  process.env.DATABASE_CONNECTION_STRING ? "Atlas" : "Local"
-);
 
 // MongoDB connection
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
@@ -64,77 +48,41 @@ mongoose.connection.on("error", (error) => {
 const app = express();
 
 // CORS configuration - MUST come before session
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://kambaz-quizzes-frontend-indol.vercel.app",
-  process.env.CLIENT_URL, // Use CLIENT_URL (Render's variable name)
-  process.env.FRONTEND_URL, // Keep both for compatibility
-].filter(Boolean); // Remove undefined values
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (Postman, mobile apps)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log("CORS blocked origin:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+const corsOptions = {
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Set-Cookie"],
+};
+
+app.use(cors(corsOptions));
 
 // Session configuration
-const mongoUrl = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
-
 const sessionOptions = {
-  secret: process.env.SESSION_SECRET || "kambaz-secret-key-change-in-production",
+  secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,
   saveUninitialized: false,
-
-  // CRITICAL: Use MongoDB to persist sessions
-  store: MongoStore.create({
-    mongoUrl: mongoUrl,
-    dbName: "kambaz",
-    collectionName: "sessions",
-    ttl: 24 * 60 * 60, // 24 hours
-    touchAfter: 60 * 60, // Update session once per hour (performance)
-    crypto: {
-      secret: process.env.SESSION_SECRET || "kambaz-secret-key",
-    },
-  }),
-
-  // CRITICAL: Cookie settings for cross-domain
+  name: "kambaz.sid", // Custom session name
   cookie: {
-    secure: isProduction, // true in production (HTTPS only)
-    httpOnly: true, // Prevent JavaScript access
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: isProduction ? "none" : "lax", // 'none' required for cross-domain!
-    // Don't set domain for cross-domain cookies (Vercel frontend + Render backend)
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+    httpOnly: true,
     path: "/", // Ensure cookie is available for all paths
   },
 };
 
+if (process.env.SERVER_ENV !== "development") {
+  sessionOptions.proxy = true;
+  sessionOptions.cookie.sameSite = "none";
+  sessionOptions.cookie.secure = true;
+  // In production, ensure cookie works across domains
+  sessionOptions.cookie.domain = undefined; // Let browser set domain automatically
+} else {
+  sessionOptions.cookie.sameSite = "lax";
+  sessionOptions.cookie.secure = false;
+}
+
 app.use(session(sessionOptions));
-
-// DEBUG: Log session status
-app.use((req, res, next) => {
-  console.log("=== SESSION DEBUG ===");
-  console.log("Path:", req.path);
-  console.log("Method:", req.method);
-  console.log("Session ID:", req.sessionID);
-  console.log("Has session:", !!req.session);
-  console.log("Current user:", req.session?.currentUser?.username || req.session?.currentUser?.email || "none");
-  console.log("Cookie:", req.headers.cookie);
-  next();
-});
-
 app.use(express.json());
 
 // Routes
