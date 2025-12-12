@@ -15,6 +15,21 @@ import QuizAttemptsRoutes from "./Kambaz/QuizAttempts/routes.js";
 import Lab5 from "./Lab5/index.js";
 import Hello from "./Hello.js";
 
+// Environment variables check
+console.log("=== ENVIRONMENT VARIABLES ===");
+console.log("SERVER_ENV:", process.env.SERVER_ENV);
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("CLIENT_URL:", process.env.CLIENT_URL);
+console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
+const isProduction =
+  process.env.NODE_ENV === "production" ||
+  process.env.SERVER_ENV === "production";
+console.log("Is Production:", isProduction);
+console.log(
+  "Database:",
+  process.env.DATABASE_CONNECTION_STRING ? "Atlas" : "Local"
+);
+
 // MongoDB connection
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
 
@@ -52,7 +67,8 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "https://kambaz-quizzes-frontend-indol.vercel.app",
-  process.env.FRONTEND_URL,
+  process.env.CLIENT_URL, // Use CLIENT_URL (Render's variable name)
+  process.env.FRONTEND_URL, // Keep both for compatibility
 ].filter(Boolean); // Remove undefined values
 
 app.use(
@@ -75,7 +91,6 @@ app.use(
 );
 
 // Session configuration
-const isProduction = process.env.NODE_ENV === "production";
 const mongoUrl = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
 
 const sessionOptions = {
