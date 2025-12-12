@@ -207,21 +207,29 @@ export default function QuizAttemptsRoutes(app, db) {
       // Calculate score on backend
       const { score, totalPoints, isCorrect } = dao.calculateQuizScore(quiz, answers);
 
-      console.log("=== SCORE CALCULATION ===");
-      console.log("Score:", score);
-      console.log("Total Points:", totalPoints);
-      console.log("isCorrect array:", isCorrect);
-      console.log("Number of questions:", quiz.questions.length);
-      console.log("Number of isCorrect entries:", isCorrect.length);
+      // Debug logging (only in development or when DEBUG env var is set)
+      const isDebug = process.env.NODE_ENV !== "production" || process.env.DEBUG === "true";
+      
+      if (isDebug) {
+        console.log("=== SCORE CALCULATION ===");
+        console.log("Score:", score);
+        console.log("Total Points:", totalPoints);
+        console.log("isCorrect array:", isCorrect);
+        console.log("Number of questions:", quiz.questions.length);
+        console.log("Number of isCorrect entries:", isCorrect.length);
+      }
 
       // Prepare submission timestamp
       const submittedAt = new Date();
-      console.log("=== SUBMITTING ATTEMPT ===");
-      console.log("Attempt ID:", attemptId);
-      console.log("submittedAt timestamp being set:", submittedAt);
-      console.log("submittedAt ISO string:", submittedAt.toISOString());
-      console.log("Score to save:", score);
-      console.log("isCorrect array to save:", isCorrect);
+      
+      if (isDebug) {
+        console.log("=== SUBMITTING ATTEMPT ===");
+        console.log("Attempt ID:", attemptId);
+        console.log("submittedAt timestamp being set:", submittedAt);
+        console.log("submittedAt ISO string:", submittedAt.toISOString());
+        console.log("Score to save:", score);
+        console.log("isCorrect array to save:", isCorrect);
+      }
 
       // Update the attempt with calculated values AND isCorrect array
       await dao.submitAttempt(attemptId, answers, score, totalPoints, finalElapsedSeconds, isCorrect, submittedAt);
@@ -229,13 +237,15 @@ export default function QuizAttemptsRoutes(app, db) {
       // Fetch updated attempt
       const updatedAttempt = await dao.findAttemptById(attemptId);
 
-      console.log("=== RETURNING RESPONSE ===");
-      console.log("Updated attempt ID:", updatedAttempt?._id);
-      console.log("submittedAt in saved attempt:", updatedAttempt?.submittedAt);
-      console.log("submittedAt type:", typeof updatedAttempt?.submittedAt);
-      console.log("Score in saved attempt:", updatedAttempt?.score);
-      console.log("isCorrect in saved attempt:", updatedAttempt?.isCorrect);
-      console.log("isCorrect in response:", updatedAttempt?.isCorrect || isCorrect);
+      if (isDebug) {
+        console.log("=== RETURNING RESPONSE ===");
+        console.log("Updated attempt ID:", updatedAttempt?._id);
+        console.log("submittedAt in saved attempt:", updatedAttempt?.submittedAt);
+        console.log("submittedAt type:", typeof updatedAttempt?.submittedAt);
+        console.log("Score in saved attempt:", updatedAttempt?.score);
+        console.log("isCorrect in saved attempt:", updatedAttempt?.isCorrect);
+        console.log("isCorrect in response:", updatedAttempt?.isCorrect || isCorrect);
+      }
 
       // Return attempt with score, totalPoints, and isCorrect array
       res.json({

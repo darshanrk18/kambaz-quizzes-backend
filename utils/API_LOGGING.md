@@ -1,3 +1,107 @@
+# API Logging Documentation
+
+## Backend API Logging (Implemented)
+
+The backend now includes comprehensive API request/response logging via Express middleware.
+
+**Location:** `utils/apiLogger.js`
+
+**Features:**
+- Logs all incoming requests (method, URL, body, headers, session)
+- Logs all outgoing responses (status, data, duration)
+- Logs errors with detailed information
+- Tracks request duration
+- Includes timestamps
+
+**Usage:** Already integrated in `index.js` - logs all API calls automatically.
+
+## Frontend API Logging (For Frontend Repo)
+
+If you want to add frontend API logging using axios interceptors, create this file in your **frontend repository**:
+
+**File:** `utils/apiLogger.ts` (or `.js` if not using TypeScript)
+
+```typescript
+import axios from 'axios';
+
+// Intercept all axios requests and responses
+axios.interceptors.request.use(
+  (config) => {
+    console.log('🔵 API REQUEST:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      data: config.data,
+      params: config.params,
+      timestamp: new Date().toISOString()
+    });
+    return config;
+  },
+  (error) => {
+    console.error('🔴 API REQUEST ERROR:', error);
+    return Promise.reject(error);
+  }
+);
+
+axios.interceptors.response.use(
+  (response) => {
+    console.log('🟢 API RESPONSE:', {
+      status: response.status,
+      url: response.config.url,
+      data: response.data,
+      timestamp: new Date().toISOString()
+    });
+    return response;
+  },
+  (error) => {
+    console.error('🔴 API RESPONSE ERROR:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      message: error.response?.data?.message || error.message,
+      data: error.response?.data,
+      timestamp: new Date().toISOString()
+    });
+    return Promise.reject(error);
+  }
+);
+
+export default axios;
+```
+
+**To enable in frontend:**
+1. Import this file in your main layout or `_app.tsx` / `_app.js` file
+2. Or import it wherever you configure axios
+3. Example:
+   ```typescript
+   import './utils/apiLogger';
+   ```
+
+## Log Format
+
+### Backend Logs
+- 🔵 API REQUEST: Incoming requests
+- 🟢 API RESPONSE: Successful responses
+- 🔴 API ERROR RESPONSE: Error responses (status >= 400)
+
+### Frontend Logs (if implemented)
+- 🔵 API REQUEST: Outgoing requests
+- 🟢 API RESPONSE: Successful responses
+- 🔴 API RESPONSE ERROR: Error responses
+
+## Disabling Logs
+
+To disable backend logging, comment out or remove this line in `index.js`:
+```javascript
+app.use(apiLogger);
+```
+
+For frontend, simply don't import the `apiLogger` file.
+
+
+
+
+
+
+
 import "dotenv/config";
 import express from "express";
 import session from "express-session";
@@ -15,6 +119,21 @@ import QuizAttemptsRoutes from "./Kambaz/QuizAttempts/routes.js";
 import Lab5 from "./Lab5/index.js";
 import Hello from "./Hello.js";
 import apiLogger from "./utils/apiLogger.js";
+
+// Environment variables check
+console.log("=== ENVIRONMENT VARIABLES ===");
+console.log("SERVER_ENV:", process.env.SERVER_ENV);
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("CLIENT_URL:", process.env.CLIENT_URL);
+console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
+const isProduction =
+  process.env.NODE_ENV === "production" ||
+  process.env.SERVER_ENV === "production";
+console.log("Is Production:", isProduction);
+console.log(
+  "Database:",
+  process.env.DATABASE_CONNECTION_STRING ? "Atlas" : "Local"
+);
 
 // MongoDB connection
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
@@ -48,11 +167,6 @@ mongoose.connection.on("error", (error) => {
 });
 
 const app = express();
-
-// Environment check
-const isProduction =
-  process.env.NODE_ENV === "production" ||
-  process.env.SERVER_ENV === "production";
 
 // CORS configuration - MUST come before session
 const allowedOrigins = [
@@ -113,6 +227,19 @@ const sessionOptions = {
 };
 
 app.use(session(sessionOptions));
+
+// DEBUG: Log session status
+app.use((req, res, next) => {
+  console.log("=== SESSION DEBUG ===");
+  console.log("Path:", req.path);
+  console.log("Method:", req.method);
+  console.log("Session ID:", req.sessionID);
+  console.log("Has session:", !!req.session);
+  console.log("Current user:", req.session?.currentUser?.username || req.session?.currentUser?.email || "none");
+  console.log("Cookie:", req.headers.cookie);
+  next();
+});
+
 app.use(express.json());
 
 // API Request/Response Logging Middleware (for debugging)

@@ -91,14 +91,18 @@ export default function QuizAttemptsDao(db) {
       updateData.isCorrect = isCorrect;
     }
 
-    console.log("=== DAO: UPDATING ATTEMPT ===");
-    console.log("Attempt ID:", attemptId);
-    console.log("Update data:", {
-      ...updateData,
-      submittedAt: submissionTimestamp.toISOString(),
-      submittedAtType: typeof submissionTimestamp,
-      isCorrectLength: isCorrect?.length,
-    });
+    // Debug logging (only in development or when DEBUG env var is set)
+    const isDebug = process.env.NODE_ENV !== "production" || process.env.DEBUG === "true";
+    if (isDebug) {
+      console.log("=== DAO: UPDATING ATTEMPT ===");
+      console.log("Attempt ID:", attemptId);
+      console.log("Update data:", {
+        ...updateData,
+        submittedAt: submissionTimestamp.toISOString(),
+        submittedAtType: typeof submissionTimestamp,
+        isCorrectLength: isCorrect?.length,
+      });
+    }
 
     const result = await model.updateOne(
       { _id: attemptId },
@@ -107,10 +111,12 @@ export default function QuizAttemptsDao(db) {
       }
     );
 
-    console.log("=== DAO: UPDATE RESULT ===");
-    console.log("Matched count:", result.matchedCount);
-    console.log("Modified count:", result.modifiedCount);
-    console.log("Acknowledged:", result.acknowledged);
+    if (isDebug) {
+      console.log("=== DAO: UPDATE RESULT ===");
+      console.log("Matched count:", result.matchedCount);
+      console.log("Modified count:", result.modifiedCount);
+      console.log("Acknowledged:", result.acknowledged);
+    }
 
     return result;
   }
