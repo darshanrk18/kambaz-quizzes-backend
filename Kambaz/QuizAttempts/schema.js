@@ -21,6 +21,9 @@ const quizAttemptSchema = new mongoose.Schema(
     startedAt: Date,
     submittedAt: Date,
     attemptNumber: Number,
+    currentQuestionIndex: Number,
+    elapsedSeconds: Number,
+    isFinalScore: { type: Boolean, default: true },
   },
   { collection: "quizAttempts" }
 );

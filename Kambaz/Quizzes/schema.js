@@ -9,6 +9,7 @@ const questionSchema = new mongoose.Schema({
     enum: ["Multiple Choice", "True/False", "Fill in the Blank"],
     default: "Multiple Choice",
   },
+  caseSensitive: { type: Boolean, default: false },
   points: Number,
   // For Multiple Choice
   options: [{
@@ -44,8 +45,8 @@ const quizSchema = new mongoose.Schema(
     shuffleAnswers: { type: Boolean, default: true },
     timeLimit: { type: Boolean, default: true },
     timeLimitMinutes: { type: Number, default: 20 },
-    multipleAttempts: { type: Boolean, default: false },
-    attemptsAllowed: { type: Number, default: 1 },
+    multipleAttempts: { type: Boolean, default: true },
+    attemptsAllowed: { type: Number, default: 3 },
     showCorrectAnswers: String, // "Immediately", "After Due Date", "Never", etc.
     accessCode: String,
     oneQuestionAtATime: { type: Boolean, default: true },

@@ -49,8 +49,8 @@ const app = express();
 
 // CORS configuration - MUST come before session
 const corsOptions = {
-    credentials: true,
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+  origin: "http://localhost:3000",
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   exposedHeaders: ["Set-Cookie"],
@@ -63,24 +63,14 @@ const sessionOptions = {
   secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,
   saveUninitialized: false,
-  name: "kambaz.sid", // Custom session name
   cookie: {
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+    secure: false,
+    sameSite: "lax",
     httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
     path: "/", // Ensure cookie is available for all paths
   },
 };
-
-if (process.env.SERVER_ENV !== "development") {
-  sessionOptions.proxy = true;
-  sessionOptions.cookie.sameSite = "none";
-  sessionOptions.cookie.secure = true;
-  // In production, ensure cookie works across domains
-  sessionOptions.cookie.domain = undefined; // Let browser set domain automatically
-} else {
-  sessionOptions.cookie.sameSite = "lax";
-  sessionOptions.cookie.secure = false;
-}
 
 app.use(session(sessionOptions));
 app.use(express.json());
