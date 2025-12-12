@@ -25,6 +25,9 @@ const quizAttemptSchema = new mongoose.Schema(
     elapsedSeconds: Number,
     isFinalScore: { type: Boolean, default: true },
     isCorrect: [{ type: Boolean }],
+    // Question order array (stores shuffled order of question indices)
+    // This ensures questions stay in the same order even after page refresh
+    questionOrder: { type: [Number], default: [] },
   },
   { collection: "quizAttempts" }
 );
