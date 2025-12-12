@@ -60,7 +60,7 @@ export default function QuizAttemptsDao(db) {
     return model.updateOne({ _id: attemptId }, { $set: attemptUpdates });
   }
 
-  async function submitAttempt(attemptId, answers, score, totalPoints, elapsedSeconds) {
+  async function submitAttempt(attemptId, answers, score, totalPoints, elapsedSeconds, isCorrect, submittedAt) {
     // Get the attempt to find userId and quizId
     const attempt = await model.findById(attemptId).lean();
     if (!attempt) {
@@ -70,11 +70,14 @@ export default function QuizAttemptsDao(db) {
     // Mark all previous attempts as not final
     await markPreviousAttemptsAsNotFinal(attempt.user, attempt.quiz, attemptId);
 
+    // Use provided submittedAt or create new Date
+    const submissionTimestamp = submittedAt || new Date();
+
     const updateData = {
       answers,
       score,
       totalPoints,
-      submittedAt: new Date(),
+      submittedAt: submissionTimestamp, // Explicitly set submittedAt timestamp
       isFinalScore: true, // Current attempt becomes the final score
     };
     
@@ -83,12 +86,33 @@ export default function QuizAttemptsDao(db) {
       updateData.elapsedSeconds = elapsedSeconds;
     }
     
-    return model.updateOne(
+    // Include isCorrect array if provided
+    if (isCorrect !== undefined) {
+      updateData.isCorrect = isCorrect;
+    }
+
+    console.log("=== DAO: UPDATING ATTEMPT ===");
+    console.log("Attempt ID:", attemptId);
+    console.log("Update data:", {
+      ...updateData,
+      submittedAt: submissionTimestamp.toISOString(),
+      submittedAtType: typeof submissionTimestamp,
+      isCorrectLength: isCorrect?.length,
+    });
+
+    const result = await model.updateOne(
       { _id: attemptId },
       {
         $set: updateData,
       }
     );
+
+    console.log("=== DAO: UPDATE RESULT ===");
+    console.log("Matched count:", result.matchedCount);
+    console.log("Modified count:", result.modifiedCount);
+    console.log("Acknowledged:", result.acknowledged);
+
+    return result;
   }
 
   async function getAttemptCountForUserAndQuiz(userId, quizId) {

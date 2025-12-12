@@ -207,16 +207,40 @@ export default function QuizAttemptsRoutes(app, db) {
       // Calculate score on backend
       const { score, totalPoints, isCorrect } = dao.calculateQuizScore(quiz, answers);
 
-      // Update the attempt with calculated values and final elapsed time
-      await dao.submitAttempt(attemptId, answers, score, totalPoints, finalElapsedSeconds);
+      console.log("=== SCORE CALCULATION ===");
+      console.log("Score:", score);
+      console.log("Total Points:", totalPoints);
+      console.log("isCorrect array:", isCorrect);
+      console.log("Number of questions:", quiz.questions.length);
+      console.log("Number of isCorrect entries:", isCorrect.length);
+
+      // Prepare submission timestamp
+      const submittedAt = new Date();
+      console.log("=== SUBMITTING ATTEMPT ===");
+      console.log("Attempt ID:", attemptId);
+      console.log("submittedAt timestamp being set:", submittedAt);
+      console.log("submittedAt ISO string:", submittedAt.toISOString());
+      console.log("Score to save:", score);
+      console.log("isCorrect array to save:", isCorrect);
+
+      // Update the attempt with calculated values AND isCorrect array
+      await dao.submitAttempt(attemptId, answers, score, totalPoints, finalElapsedSeconds, isCorrect, submittedAt);
       
       // Fetch updated attempt
       const updatedAttempt = await dao.findAttemptById(attemptId);
 
+      console.log("=== RETURNING RESPONSE ===");
+      console.log("Updated attempt ID:", updatedAttempt?._id);
+      console.log("submittedAt in saved attempt:", updatedAttempt?.submittedAt);
+      console.log("submittedAt type:", typeof updatedAttempt?.submittedAt);
+      console.log("Score in saved attempt:", updatedAttempt?.score);
+      console.log("isCorrect in saved attempt:", updatedAttempt?.isCorrect);
+      console.log("isCorrect in response:", updatedAttempt?.isCorrect || isCorrect);
+
       // Return attempt with score, totalPoints, and isCorrect array
       res.json({
         ...updatedAttempt,
-        isCorrect, // Include isCorrect array in response
+        isCorrect: updatedAttempt.isCorrect || isCorrect, // Use stored isCorrect or fallback to calculated
       });
     } catch (error) {
       console.error("Error submitting attempt:", error);
