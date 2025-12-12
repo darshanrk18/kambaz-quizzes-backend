@@ -9,20 +9,34 @@ export default function UserRoutes(app, db) {
 
   const signin = async (req, res) => {
     try {
-    const { username, password } = req.body;
-      
+      const { username, password } = req.body;
+
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
 
       const currentUser = await dao.findUserByCredentials(username, password);
-      
-    if (currentUser) {
-      req.session["currentUser"] = currentUser;
-      res.json(currentUser);
-    } else {
-        res.status(401).json({ message: "Invalid username or password" });
+
+      if (!currentUser) {
+        return res.status(401).json({ message: "Invalid username or password" });
       }
+
+      // Save to session
+      req.session["currentUser"] = currentUser;
+
+      // CRITICAL: Explicitly save session before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session error" });
+        }
+
+        console.log("=== SESSION SAVED ===");
+        console.log("Session ID:", req.sessionID);
+        console.log("User:", currentUser.username || currentUser.email);
+
+        res.json(currentUser);
+      });
     } catch (error) {
       console.error("Signin error:", error);
       res.status(500).json({ message: "Server error during signin", error: error.message });
@@ -30,14 +44,32 @@ export default function UserRoutes(app, db) {
   };
 
   const signup = async (req, res) => {
-    const user = await dao.findUserByUsername(req.body.username);
-    if (user) {
-      res.status(400).json({ message: "Username already taken" });
-      return;
+    try {
+      const user = await dao.findUserByUsername(req.body.username);
+      if (user) {
+        res.status(400).json({ message: "Username already taken" });
+        return;
+      }
+      const currentUser = await dao.createUser(req.body);
+      req.session["currentUser"] = currentUser;
+
+      // CRITICAL: Explicitly save session before responding
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Session error" });
+        }
+
+        console.log("=== SESSION SAVED (SIGNUP) ===");
+        console.log("Session ID:", req.sessionID);
+        console.log("User:", currentUser.username || currentUser.email);
+
+        res.json(currentUser);
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      res.status(500).json({ message: "Server error during signup", error: error.message });
     }
-    const currentUser = await dao.createUser(req.body);
-    req.session["currentUser"] = currentUser;
-    res.json(currentUser);
   };
 
   const signout = (req, res) => {
